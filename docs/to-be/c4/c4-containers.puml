@@ -1,0 +1,77 @@
+@startuml
+!include <C4/C4_Container>
+
+Person(user, "Пользователь", "(мобильные устройства, ноутбуки, смарт ТВ)")
+
+System_Boundary(sbGraphQL, "API Gateway") {
+    Container(cGraphQL, "GraphQL API Gateway")
+    Rel(user, cGraphQL, " ")
+}
+
+System_Boundary(sbUsers, "User Profiles System") {
+    Container(cUsers, "User Profiles API")
+    Rel(cGraphQL, cUsers, " ")
+    ContainerDb(cDbUsers, "User Profiles DB", "PostgreSQL")
+    Rel(cUsers, cDbUsers, " ")
+    ContainerDb(cDbUsersSess, "Sessions DB", "Redis")
+    Rel(cUsers, cDbUsersSess, " ")
+}
+
+System_Boundary(sbPay, "Payments & Subscriptions System") {
+    Container(cPay, "Payments & Subscriptions API")
+    Rel(cGraphQL, cPay, " ")
+    ContainerDb(cDbPay, "Payments & Subscriptions DB", "PostgreSQL")
+    Rel(cPay, cDbPay, " ")
+    ContainerDb(cDbPayCache, "Subscriptions Cache", "Redis")
+    Rel(cPay, cDbPayCache, " ")
+
+    Container(cPayCall, "Payments Callback API")
+    Rel(cPay, cPayCall, " ")
+    Rel_U(cPayCall, cDbPay, " ")
+    Rel_U(cPayCall, cDbPayCache, " ")
+}
+
+System_Ext(cExtPay, "External Payment System")
+Rel_D(cPayCall, cExtPay, " ")
+Rel(cExtPay, cPayCall, " ")
+
+System_Boundary(sbMovies, "Movies Metadata System") {
+    Container(cMovies, "Movies Metadata API")
+    Rel(cGraphQL, cMovies, " ")
+    ContainerDb(cDbMovies, "Movies Metadata DB", "PostgreSQL")
+    Rel(cMovies, cDbMovies, " ")
+    ContainerDb(cDbMoviesContent, "Movies Content\nBlob Storage", "S3")
+    Rel_R(cMovies, cDbMoviesContent, " ")
+    Rel(user, cDbMoviesContent, " ")
+}
+
+System_Boundary(sbRec, "Recommendations System") {
+    Container(cRec, "Recommendations API")
+    Rel(cGraphQL, cRec, " ")
+    ContainerDb(cDbRec, "Recommendations DB", "PostgreSQL")
+    Rel(cRec, cDbRec, " ")
+    Container(cRecPop, "Recommendations Populate Service")
+    Rel_U(cRecPop, cDbRec, " ")
+    Lay_D(cRec, cRecPop)
+    ContainerQueue(cQRec, "Recommendations Events Queue", "Kafka")
+    Rel_U(cRecPop, cQRec, " ")
+    Rel(cRec, cQRec, " ")
+}
+
+System_Ext(cExtRec, "External Recommendations System")
+Rel_D(cRecPop, cExtRec, " ")
+
+System_Boundary(sbStream, "Streaming System") {
+    Container(cStream, "Stream API")
+    Rel_R(user, cStream, " ")
+    Container(cStreamSess, "Stream Session API")
+    Rel(cGraphQL, cStreamSess, " ")
+    ContainerDb(cDbStream, "Stream Sessions DB", "Redis")
+    Rel(cStream, cDbStream, " ")
+    Rel(cStreamSess, cDbStream, " ")
+}
+
+System_Ext(cExtStream, "External Streaming System")
+Rel_U(cStream, cExtStream, " ")
+
+@enduml
