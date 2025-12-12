@@ -4,8 +4,13 @@ global:
   domain: cinemaabyss.example.com
 
 # Image pull secrets
+# kubectl create secret docker-registry dockerconfigjson \
+#   --docker-server=ghcr.io \
+#   --docker-username=reo7sp \
+#   --docker-password=ваш_PAT_токен \
+#   --namespace=cinemaabyss
 imagePullSecrets:
-  dockerconfigjson: ewoJImF1dGhzIjogewoJCSJnaGNyLmlvIjogewoJCQkiYXV0aCI6
+  dockerconfigjson: ""
 # Database configuration
 database:
   host: postgres
@@ -65,7 +70,7 @@ proxyService:
       cpu: 100m
       memory: 128Mi
   service:
-    port: 80
+    port: 8000
     targetPort: 8000
     type: ClusterIP
 
@@ -172,7 +177,7 @@ ingress:
         - path: /
           pathType: Prefix
           service: proxy-service
-          port: 80
+          port: 8000
         - path: /api/events
           pathType: Prefix
           service: events-service
